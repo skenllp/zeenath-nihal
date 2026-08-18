@@ -976,58 +976,73 @@ body:not(.is-revealed) #site * {
 }
 
 .scroll-indicator {
+  position: fixed;
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 85;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  color: var(--brown);
+  justify-content: center;
+  gap: 3px;
+  color: var(--gold-light, #F3E5C8);
+  text-decoration: none;
+  padding: 8px 18px;
+  border-radius: 22px;
+  background: rgba(14, 10, 6, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+
+body.is-revealed .scroll-indicator {
+  opacity: 1;
+  visibility: visible;
+}
+
+.scroll-indicator:hover {
+  background: rgba(14, 10, 6, 0.85);
+  border-color: rgba(212, 175, 55, 0.65);
+  transform: translateX(-50%) translateY(-2px);
+  color: #FFF;
 }
 
 .scroll-indicator__word {
+  font-family: var(--f-body, sans-serif);
   font-size: 9.5px;
-  letter-spacing: .36em;
+  letter-spacing: .32em;
   text-transform: uppercase;
-  opacity: .72
+  color: #F3E5C8;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.scroll-indicator__rail {
-  position: relative;
-  width: 1px;
-  height: 52px;
-  background: linear-gradient(180deg, rgba(122, 92, 67, .5), transparent);
-  overflow: visible;
+.scroll-indicator__arrow {
+  width: 15px;
+  height: 15px;
+  color: var(--gold, #C1962F);
+  animation: scrollBounce 2s infinite var(--ease-soft, ease-in-out);
+  transition: transform 0.4s ease;
 }
 
-.scroll-indicator__dot {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 5px;
-  height: 5px;
-  margin-left: -2.5px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 10px rgba(193, 150, 47, .9);
-  animation: scrollDot 2.4s var(--ease-soft) infinite;
+.scroll-indicator.is-at-bottom .scroll-indicator__arrow {
+  transform: rotate(180deg);
+  animation: none;
 }
 
-@keyframes scrollDot {
-  0% {
+@keyframes scrollBounce {
+  0%, 100% {
     transform: translateY(0);
-    opacity: 0
   }
-
-  18% {
-    opacity: 1
-  }
-
-  80% {
-    opacity: 1
-  }
-
-  100% {
-    transform: translateY(46px);
-    opacity: 0
+  50% {
+    transform: translateY(4px);
   }
 }
 

@@ -778,17 +778,54 @@
   else window.addEventListener('load', bootParticles);
 
   /* ---------------------------------------------------------
-     10 · Smooth anchor
+     10b · Fixed floating scroll indicator controller
      --------------------------------------------------------- */
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
-    if (!a) return;
-    var id = a.getAttribute('href');
-    if (!id || id === '#') return;
-    var t = document.querySelector(id);
-    if (!t) return;
-    e.preventDefault();
-    t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  (function initFixedScrollIndicator() {
+    var indicator = document.getElementById('scrollIndicator');
+    if (!indicator) return;
+
+    function updateState() {
+      var docH = document.documentElement.scrollHeight || document.body.scrollHeight;
+      var winH = window.innerHeight || document.documentElement.clientHeight;
+      var currentY = window.pageYOffset || document.documentElement.scrollTop;
+
+      var isAtBottom = (currentY + winH >= docH - 180);
+      indicator.classList.toggle('is-at-bottom', isAtBottom);
+
+      var wordEl = indicator.querySelector('.scroll-indicator__word');
+      if (wordEl) {
+        wordEl.textContent = isAtBottom ? 'Top' : 'Scroll';
+      }
+    }
+
+    indicator.addEventListener('click', function (e) {
+      e.preventDefault();
+      var docH = document.documentElement.scrollHeight || document.body.scrollHeight;
+      var winH = window.innerHeight || document.documentElement.clientHeight;
+      var currentY = window.pageYOffset || document.documentElement.scrollTop;
+
+      if (currentY + winH >= docH - 200) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      /* Find next section below current viewport */
+      var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
+      var targetY = currentY + winH * 0.85;
+
+      for (var i = 0; i < sections.length; i++) {
+        var top = sections[i].getBoundingClientRect().top + currentY;
+        if (top > currentY + 40) {
+          targetY = top;
+          break;
+        }
+      }
+
+      window.scrollTo({ top: targetY, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', updateState, { passive: true });
+    updateState();
+  })();
 
 })();

@@ -218,16 +218,21 @@ img.section-bg{
   box-sizing:border-box;
 }
 
-/* Scroll cue in the bottom safe band of the SAME image */
-.scene--screen > .scroll-indicator{
-  grid-column:1 / -1;
-  grid-row:3;
-  z-index:3;
-  justify-self:center;
-  align-self:end;
-  margin-bottom:clamp(10px, 18%, 36px);
+/* Scroll cue fixed at bottom of viewport */
+.scroll-indicator{
+  position:fixed !important;
+  bottom:max(20px, env(safe-area-inset-bottom, 20px)) !important;
+  left:50% !important;
+  transform:translateX(-50%) !important;
+  z-index:85 !important;
   opacity:0;
-  transition:opacity .6s ease .3s;
+  visibility:hidden;
+  transition:opacity .5s ease, visibility .5s ease, transform .3s ease, background .3s ease;
+}
+
+body.is-revealed .scroll-indicator{
+  opacity:1;
+  visibility:visible;
 }
 
 .scene--hero .section-overlay{
