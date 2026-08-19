@@ -2834,6 +2834,16 @@ body.finale-particles .finale-fallback {
   opacity: .75
 }
 
+.footer-compliments {
+  margin-top: 22px;
+  font-family: var(--f-ml);
+  font-size: 13px;
+  color: var(--gold);
+  opacity: .6;
+  line-height: 1.7;
+  letter-spacing: 0.03em;
+}
+
 /* ============================================================
    12 · RESPONSIVE
    ============================================================ */
