@@ -2837,11 +2837,19 @@ body.finale-particles .finale-fallback {
 .footer-compliments {
   margin-top: 22px;
   font-family: var(--f-ml);
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--gold);
-  opacity: .6;
-  line-height: 1.7;
-  letter-spacing: 0.03em;
+  opacity: 1;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+}
+
+.footer-compliments strong {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f5c45e;
+  letter-spacing: 0.06em;
 }
 
 /* ============================================================
