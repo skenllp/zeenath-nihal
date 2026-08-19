@@ -808,4 +808,49 @@
     customSmoothScrollTo(targetY, 1200);
   });
 
+  /* ---------------------------------------------------------
+     11 · Scroll indicator  ·  update on scroll
+     --------------------------------------------------------- */
+  (function () {
+    var indicator = document.getElementById('scrollIndicator');
+    if (!indicator) return;
+
+    var sections = ['details', 'story', 'timeline', 'couple', 'reception', 'thankyou'];
+    var atBottom = false;
+
+    function updateIndicator() {
+      var scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      var docH = document.documentElement.scrollHeight;
+      var winH = window.innerHeight;
+      var nearBottom = scrollY + winH >= docH - 80;
+
+      if (nearBottom !== atBottom) {
+        atBottom = nearBottom;
+        indicator.classList.toggle('is-at-bottom', nearBottom);
+        if (nearBottom) {
+          indicator.setAttribute('href', '#details');
+          indicator.setAttribute('aria-label', 'Scroll to top');
+        } else {
+          indicator.setAttribute('aria-label', 'Scroll down');
+        }
+      }
+
+      /* Update href to next section below current viewport */
+      if (!nearBottom) {
+        for (var i = 0; i < sections.length; i++) {
+          var el = document.getElementById(sections[i]);
+          if (!el) continue;
+          var rect = el.getBoundingClientRect();
+          if (rect.top > 60) {
+            indicator.setAttribute('href', '#' + sections[i]);
+            break;
+          }
+        }
+      }
+    }
+
+    window.addEventListener('scroll', updateIndicator, { passive: true });
+    updateIndicator();
+  })();
+
 })();
