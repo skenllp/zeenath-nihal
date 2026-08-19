@@ -2836,20 +2836,25 @@ body.finale-particles .finale-fallback {
 
 .footer-compliments {
   margin-top: 22px;
-  font-family: var(--f-ml);
-  font-size: 15px;
-  font-weight: 600;
+  font-family: var(--f-display);
+  font-size: 17px;
+  font-weight: 400;
+  font-style: italic;
   color: var(--gold);
   opacity: 1;
   line-height: 1.9;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .footer-compliments strong {
-  font-size: 16px;
-  font-weight: 800;
+  font-family: var(--f-display);
+  font-size: 19px;
+  font-weight: 600;
+  font-style: normal;
   color: #f5c45e;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-top: 2px;
 }
 
 /* ============================================================
