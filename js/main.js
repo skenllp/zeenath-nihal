@@ -330,6 +330,100 @@
   /* ---------------------------------------------------------
      5 · Landing → video → hero
      --------------------------------------------------------- */
+  var autoScrollTimer = null;
+  var autoScrollCancel = null;
+
+  function cancelAutoScroll() {
+    if (autoScrollTimer) {
+      clearTimeout(autoScrollTimer);
+      autoScrollTimer = null;
+    }
+    if (typeof autoScrollCancel === 'function') {
+      autoScrollCancel();
+      autoScrollCancel = null;
+    }
+    removeAutoScrollListeners();
+  }
+
+  function onUserInterruptAutoScroll() {
+    cancelAutoScroll();
+  }
+
+  function removeAutoScrollListeners() {
+    window.removeEventListener('wheel', onUserInterruptAutoScroll);
+    window.removeEventListener('touchstart', onUserInterruptAutoScroll);
+    window.removeEventListener('pointerdown', onUserInterruptAutoScroll);
+    window.removeEventListener('keydown', onUserInterruptAutoScroll);
+  }
+
+  function listenAutoScrollInterruption() {
+    window.addEventListener('wheel', onUserInterruptAutoScroll, { passive: true });
+    window.addEventListener('touchstart', onUserInterruptAutoScroll, { passive: true });
+    window.addEventListener('pointerdown', onUserInterruptAutoScroll, { passive: true });
+    window.addEventListener('keydown', onUserInterruptAutoScroll, { passive: true });
+  }
+
+  function customSmoothScrollTo(targetY, duration) {
+    var startY = window.pageYOffset || document.documentElement.scrollTop;
+    var distance = targetY - startY;
+    if (Math.abs(distance) < 5) return;
+
+    var startTime = null;
+    var animId = null;
+
+    function step(currentTime) {
+      if (!startTime) startTime = currentTime;
+      var timeElapsed = currentTime - startTime;
+      var progress = Math.min(timeElapsed / duration, 1);
+
+      /* Ultra smooth cubic easeInOut curve */
+      var ease = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      window.scrollTo(0, startY + distance * ease);
+
+      if (progress < 1) {
+        animId = requestAnimationFrame(step);
+      } else {
+        autoScrollCancel = null;
+        removeAutoScrollListeners();
+      }
+    }
+
+    animId = requestAnimationFrame(step);
+    autoScrollCancel = function () {
+      if (animId) cancelAnimationFrame(animId);
+      animId = null;
+    };
+  }
+
+  function scheduleAutoScrollBelowHero() {
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return;
+
+    cancelAutoScroll();
+    listenAutoScrollInterruption();
+
+    /* Allow the visitor ~1.5s to admire the Hero section before smooth scrolling */
+    autoScrollTimer = setTimeout(function () {
+      autoScrollTimer = null;
+      var currentY = window.pageYOffset || document.documentElement.scrollTop;
+      /* If visitor has already manually scrolled away, do not auto scroll */
+      if (currentY > 60) {
+        removeAutoScrollListeners();
+        return;
+      }
+
+      var detailsEl = document.getElementById('details');
+      var targetY = detailsEl
+        ? (detailsEl.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop))
+        : (heroEl ? heroEl.offsetHeight : window.innerHeight);
+
+      customSmoothScrollTo(targetY, 1400);
+    }, 1500);
+  }
+
   function revealHeroAndSite() {
     if (heroEl) {
       heroEl.classList.add('loaded');
@@ -350,6 +444,9 @@
     revealBox.classList.remove('is-armed', 'is-on');
     revealBox.classList.add('is-out', 'is-live');
 
+    /* Auto scroll to section just below hero after short delay */
+    scheduleAutoScrollBelowHero();
+
     setTimeout(function () {
       revealBox.classList.add('is-gone');
       revealBox.setAttribute('aria-hidden', 'true');
@@ -360,88 +457,6 @@
         video.load();
       } catch (e) {}
     }, 900);
-
-    triggerAutoScrollBelowHero();
-  }
-
-  var autoScrollDone = false;
-  function triggerAutoScrollBelowHero() {
-    if (autoScrollDone) return;
-    autoScrollDone = true;
-
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var targetSection = document.getElementById('details') || (heroEl ? heroEl.nextElementSibling : null);
-    if (!targetSection) return;
-
-    var autoScrollTimer = null;
-    var cancelFn = null;
-
-    function cleanup() {
-      if (autoScrollTimer) clearTimeout(autoScrollTimer);
-      if (cancelFn) cancelFn();
-      window.removeEventListener('wheel', onUserInteract);
-      window.removeEventListener('touchstart', onUserInteract);
-      window.removeEventListener('pointerdown', onUserInteract);
-      window.removeEventListener('keydown', onUserInteract);
-    }
-
-    function onUserInteract() {
-      cleanup();
-    }
-
-    /* Cancel if visitor interacts before or during auto-scroll */
-    window.addEventListener('wheel', onUserInteract, { passive: true });
-    window.addEventListener('touchstart', onUserInteract, { passive: true });
-    window.addEventListener('pointerdown', onUserInteract, { passive: true });
-    window.addEventListener('keydown', onUserInteract, { passive: true });
-
-    /* Brief pause (1400ms) to admire Hero before silk-smooth scroll */
-    autoScrollTimer = setTimeout(function () {
-      if ((window.pageYOffset || document.documentElement.scrollTop) > 80) {
-        cleanup();
-        return;
-      }
-
-      var targetY = targetSection.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop);
-
-      if (reduceMotion) {
-        window.scrollTo({ top: targetY, behavior: 'smooth' });
-        cleanup();
-        return;
-      }
-
-      /* Custom luxurious ease-in-out cubic smooth scroll */
-      var startY = window.pageYOffset || document.documentElement.scrollTop;
-      var distance = targetY - startY;
-      var duration = 1600; /* 1.6 seconds smooth glide */
-      var startTime = null;
-      var animId = null;
-
-      cancelFn = function () {
-        if (animId) cancelAnimationFrame(animId);
-      };
-
-      function step(timestamp) {
-        if (!startTime) startTime = timestamp;
-        var elapsed = timestamp - startTime;
-        var progress = Math.min(elapsed / duration, 1);
-
-        /* Smooth ease-in-out cubic curve */
-        var ease = progress < 0.5
-          ? 4 * progress * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-        window.scrollTo(0, startY + distance * ease);
-
-        if (progress < 1) {
-          animId = requestAnimationFrame(step);
-        } else {
-          cleanup();
-        }
-      }
-
-      animId = requestAnimationFrame(step);
-    }, 1400);
   }
 
   function finishReveal() {
@@ -722,10 +737,10 @@
   }
 
   /* ---------------------------------------------------------
-     8 · Countdown  ·  26 Sep 2026, 11:00 IST
+     8 · Countdown  ·  27 Sep 2026, 12:00 IST
      --------------------------------------------------------- */
   (function countdown() {
-    var target = new Date('2026-09-26T11:00:00+05:30').getTime();
+    var target = new Date('2026-09-27T12:00:00+05:30').getTime();
     var d = document.getElementById('cdD'),
         h = document.getElementById('cdH'),
         m = document.getElementById('cdM'),
@@ -778,54 +793,19 @@
   else window.addEventListener('load', bootParticles);
 
   /* ---------------------------------------------------------
-     10b · Fixed floating scroll indicator controller
+     10 · Smooth anchor
      --------------------------------------------------------- */
-  (function initFixedScrollIndicator() {
-    var indicator = document.getElementById('scrollIndicator');
-    if (!indicator) return;
-
-    function updateState() {
-      var docH = document.documentElement.scrollHeight || document.body.scrollHeight;
-      var winH = window.innerHeight || document.documentElement.clientHeight;
-      var currentY = window.pageYOffset || document.documentElement.scrollTop;
-
-      var isAtBottom = (currentY + winH >= docH - 180);
-      indicator.classList.toggle('is-at-bottom', isAtBottom);
-
-      var wordEl = indicator.querySelector('.scroll-indicator__word');
-      if (wordEl) {
-        wordEl.textContent = isAtBottom ? 'Top' : 'Scroll';
-      }
-    }
-
-    indicator.addEventListener('click', function (e) {
-      e.preventDefault();
-      var docH = document.documentElement.scrollHeight || document.body.scrollHeight;
-      var winH = window.innerHeight || document.documentElement.clientHeight;
-      var currentY = window.pageYOffset || document.documentElement.scrollTop;
-
-      if (currentY + winH >= docH - 200) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-
-      /* Find next section below current viewport */
-      var sections = Array.prototype.slice.call(document.querySelectorAll('section[id]'));
-      var targetY = currentY + winH * 0.85;
-
-      for (var i = 0; i < sections.length; i++) {
-        var top = sections[i].getBoundingClientRect().top + currentY;
-        if (top > currentY + 40) {
-          targetY = top;
-          break;
-        }
-      }
-
-      window.scrollTo({ top: targetY, behavior: 'smooth' });
-    });
-
-    window.addEventListener('scroll', updateState, { passive: true });
-    updateState();
-  })();
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (!a) return;
+    cancelAutoScroll();
+    var id = a.getAttribute('href');
+    if (!id || id === '#') return;
+    var t = document.querySelector(id);
+    if (!t) return;
+    e.preventDefault();
+    var targetY = t.getBoundingClientRect().top + (window.pageYOffset || document.documentElement.scrollTop);
+    customSmoothScrollTo(targetY, 1200);
+  });
 
 })();
